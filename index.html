@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es" class="dark" data-font-size="normal">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -40,6 +40,7 @@
             --text-sub: #94a3b8;
             --header-bg: rgba(15, 23, 42, 0.85);
             --bubble-bg: rgba(30, 41, 59, 0.95);
+            --focus-ring: #f59e0b;
         }
 
         html.light {
@@ -52,12 +53,54 @@
             --bubble-bg: rgba(255, 255, 255, 0.98);
         }
 
+        /* High Contrast Mode Overrides (WCAG AAA) */
+        html.high-contrast {
+            --bg-main: #000000 !important;
+            --bg-card: #000000 !important;
+            --border-card: #ffffff !important;
+            --text-main: #ffffff !important;
+            --text-sub: #ffff00 !important;
+            --header-bg: #000000 !important;
+            --bubble-bg: #000000 !important;
+            --focus-ring: #ffff00 !important;
+        }
+
+        html.high-contrast .glass-card {
+            border: 2px solid #ffffff !important;
+            background: #000000 !important;
+        }
+
+        html.high-contrast button, html.high-contrast select, html.high-contrast input {
+            border: 2px solid #ffffff !important;
+            background-color: #000000 !important;
+            color: #ffffff !important;
+        }
+
+        html.high-contrast .badge-hc {
+            background-color: #ffff00 !important;
+            color: #000000 !important;
+            font-weight: 900 !important;
+            border: 1px solid #ffffff !important;
+        }
+
+        /* Text Size Scaling */
+        html[data-font-size="normal"] { font-size: 100%; }
+        html[data-font-size="large"] { font-size: 120%; }
+        html[data-font-size="xlarge"] { font-size: 140%; }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-main);
             color: var(--text-main);
             transition: background-color 0.3s ease, color 0.3s ease;
             overflow-x: hidden;
+        }
+
+        /* Enhanced High Visibility Focus Rings for Keyboard Navigation */
+        :focus-visible {
+            outline: 3px solid var(--focus-ring) !important;
+            outline-offset: 3px !important;
+            box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.3) !important;
         }
 
         .glass-panel {
@@ -73,6 +116,16 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-card);
             transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+
+        /* Reduce Motion Support */
+        html.reduce-motion *, 
+        html.reduce-motion .mascot-float, 
+        html.reduce-motion .mascot-eye, 
+        html.reduce-motion .stagger-item {
+            animation: none !important;
+            transition: none !important;
+            transform: none !important;
         }
 
         .glass-card:hover {
@@ -136,6 +189,19 @@
             box-shadow: 0 10px 30px -5px rgba(0,0,0,0.3);
         }
 
+        /* Screen Reader Skip Link Utility */
+        .sr-only-focusable:not(:focus):not(:focus-within) {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
         /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
@@ -163,6 +229,15 @@
 </head>
 <body class="min-h-screen flex flex-col relative selection:bg-emerald-500 selection:text-white">
 
+    <!-- Keyboard Navigation Skip Link -->
+    <a href="#mainContent" id="skipLinkBtn" 
+        class="sr-only-focusable fixed top-3 left-3 z-[100] bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl font-black text-xs shadow-2xl focus:outline-none focus:ring-4 focus:ring-black">
+        Saltar al contenido principal
+    </a>
+
+    <!-- ARIA Live Announcement Region for Screen Readers -->
+    <div id="ariaAnnouncer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
     <header class="sticky top-0 z-40 glass-panel">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <!-- App Logo & Title -->
@@ -183,8 +258,15 @@
                 </div>
             </div>
 
-            <!-- Toolbar Controls (Language, Theme, Sound) -->
+            <!-- Toolbar Controls (Accessibility, Language, Theme, Sound) -->
             <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Accessibility Menu Toggle Button -->
+                <button id="a11yMenuToggleBtn" aria-expanded="false" aria-controls="a11yModal" aria-label="Abrir Menú de Accesibilidad"
+                    class="p-2 sm:px-3 sm:py-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 transition-all flex items-center gap-1.5 text-xs font-bold shadow-sm">
+                    <i data-lucide="accessibility" class="w-4 h-4"></i>
+                    <span id="a11yBtnLabel" class="hidden md:inline">Accesibilidad</span>
+                </button>
+
                 <!-- Language Selector -->
                 <div class="relative">
                     <select id="langSelect" aria-label="Seleccionar Idioma" 
@@ -197,14 +279,14 @@
                 </div>
 
                 <!-- Theme Toggle Button -->
-                <button id="themeToggleBtn" aria-label="Cambiar Tema"
+                <button id="themeToggleBtn" aria-label="Cambiar Tema Modo Claro u Oscuro"
                     class="p-2 rounded-xl border border-slate-700/60 dark:border-slate-800 bg-slate-800/80 dark:bg-slate-900/80 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400 transition-all shadow-sm">
                     <i data-lucide="sun" id="themeIconSun" class="w-4 h-4 hidden dark:block text-amber-400"></i>
                     <i data-lucide="moon" id="themeIconMoon" class="w-4 h-4 block dark:hidden text-indigo-600"></i>
                 </button>
 
                 <!-- Sound Synthesizer Toggle -->
-                <button id="soundToggleBtn" aria-label="Alternar Sonido" 
+                <button id="soundToggleBtn" aria-label="Alternar Efectos de Sonido" 
                     class="p-2 sm:px-3 sm:py-1.5 rounded-xl border border-slate-700/60 dark:border-slate-800 bg-slate-800/80 dark:bg-slate-900/80 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400 transition-all flex items-center gap-1.5 text-xs font-semibold shadow-sm">
                     <span id="soundBadge" class="w-2 h-2 rounded-full bg-emerald-400"></span>
                     <i data-lucide="volume-2" id="soundIcon" class="w-4 h-4 text-emerald-400"></i>
@@ -214,7 +296,75 @@
         </div>
     </header>
 
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2 w-full relative z-10">
+    <!-- Accessibility Settings Modal/Drawer -->
+    <div id="a11yModal" class="fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 border-amber-500/30 shadow-2xl bg-slate-900 relative" role="dialog" aria-modal="true" aria-labelledby="a11yModalTitle">
+            <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
+                <div class="flex items-center gap-2.5 text-amber-400">
+                    <i data-lucide="accessibility" class="w-6 h-6"></i>
+                    <h2 id="a11yModalTitle" class="text-lg font-black tracking-tight">Opciones de Accesibilidad</h2>
+                </div>
+                <button id="closeA11yModalBtn" aria-label="Cerrar Menú de Accesibilidad" class="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-5 text-xs sm:text-sm">
+                <!-- Text Size Adjuster -->
+                <div class="space-y-2">
+                    <label id="lblTextSize" class="font-bold flex items-center gap-2 text-slate-200">
+                        <i data-lucide="type" class="w-4 h-4 text-emerald-400"></i> Tamaño de Texto
+                    </label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button id="btnFontNormal" onclick="setFontSize('normal')" class="px-3 py-2 rounded-xl border border-slate-700 font-bold bg-emerald-600 text-white">100%</button>
+                        <button id="btnFontLarge" onclick="setFontSize('large')" class="px-3 py-2 rounded-xl border border-slate-700 font-bold bg-slate-800 hover:bg-slate-700 text-slate-200">120%</button>
+                        <button id="btnFontXL" onclick="setFontSize('xlarge')" class="px-3 py-2 rounded-xl border border-slate-700 font-bold bg-slate-800 hover:bg-slate-700 text-slate-200">140%</button>
+                    </div>
+                </div>
+
+                <!-- High Contrast Toggle -->
+                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-800/50 border border-slate-800">
+                    <div class="space-y-0.5">
+                        <span id="lblHighContrast" class="font-bold block text-slate-200">Alto Contraste</span>
+                        <span id="descHighContrast" class="text-[11px] text-slate-400 block">Fondo negro puro con texto de alta visibilidad</span>
+                    </div>
+                    <button id="toggleHighContrastBtn" aria-pressed="false" class="px-3 py-1.5 rounded-xl bg-slate-700 font-bold text-xs text-slate-200 hover:bg-slate-600 transition-all">
+                        <span id="hcStatus">OFF</span>
+                    </button>
+                </div>
+
+                <!-- Screen Reader / Web Speech API Voice Reader -->
+                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-800/50 border border-slate-800">
+                    <div class="space-y-0.5">
+                        <span id="lblVoiceReader" class="font-bold block text-slate-200">Lector de Voz (TTS)</span>
+                        <span id="descVoiceReader" class="text-[11px] text-slate-400 block">Lee en voz alta componentes y mensajes al interactuar</span>
+                    </div>
+                    <button id="toggleVoiceBtn" aria-pressed="false" class="px-3 py-1.5 rounded-xl bg-slate-700 font-bold text-xs text-slate-200 hover:bg-slate-600 transition-all">
+                        <span id="voiceStatus">OFF</span>
+                    </button>
+                </div>
+
+                <!-- Reduce Motion Toggle -->
+                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-800/50 border border-slate-800">
+                    <div class="space-y-0.5">
+                        <span id="lblReduceMotion" class="font-bold block text-slate-200">Reducir Movimiento</span>
+                        <span id="descReduceMotion" class="text-[11px] text-slate-400 block">Desactiva animaciones y efectos flotantes</span>
+                    </div>
+                    <button id="toggleReduceMotionBtn" aria-pressed="false" class="px-3 py-1.5 rounded-xl bg-slate-700 font-bold text-xs text-slate-200 hover:bg-slate-600 transition-all">
+                        <span id="motionStatus">OFF</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-800 text-center">
+                <button id="a11yCloseDoneBtn" class="w-full py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-xs hover:bg-emerald-500 transition-colors shadow-lg">
+                    Guardar y Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <section id="mainContent" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2 w-full relative z-10" tabindex="-1">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800/50">
             <div>
                 <h2 id="sectionHeader" class="text-2xl sm:text-3xl font-black tracking-tight">
@@ -232,8 +382,9 @@
             <div class="relative flex-1 rounded-xl transition-all">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 <input type="text" id="searchInput" placeholder="Buscar componente o material..."
+                    aria-label="Buscar componente o material en el catálogo"
                     class="w-full pl-10 pr-10 py-2.5 bg-slate-800/60 dark:bg-slate-900/90 border border-slate-700/60 dark:border-slate-800 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-emerald-500 text-slate-100 dark:text-white placeholder-slate-400 transition-all shadow-inner">
-                <button id="clearSearchBtn" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1">
+                <button id="clearSearchBtn" aria-label="Limpiar campo de búsqueda" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -241,7 +392,7 @@
             <div class="flex items-center gap-2">
                 <!-- Sorting Dropdown -->
                 <div class="relative flex-1 sm:flex-none">
-                    <select id="sortSelect" aria-label="Ordenar componentes" class="w-full sm:w-auto appearance-none bg-slate-800/60 dark:bg-slate-900/90 border border-slate-700/60 dark:border-slate-800 pl-3.5 pr-8 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-200 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-sm">
+                    <select id="sortSelect" aria-label="Ordenar componentes por criterio" class="w-full sm:w-auto appearance-none bg-slate-800/60 dark:bg-slate-900/90 border border-slate-700/60 dark:border-slate-800 pl-3.5 pr-8 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-200 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-sm">
                         <option value="name-asc">Nombre: A-Z</option>
                         <option value="name-desc">Nombre: Z-A</option>
                         <option value="donation-asc">Donación: Menor a Mayor</option>
@@ -251,11 +402,11 @@
                 </div>
 
                 <!-- View Switcher -->
-                <div class="flex items-center bg-slate-800/60 dark:bg-slate-900/90 border border-slate-700/60 dark:border-slate-800 rounded-xl p-1 shadow-sm">
-                    <button id="gridViewBtn" aria-label="Vista en Cuadrícula" class="p-2 rounded-lg bg-emerald-600 text-white shadow-md transition-all">
+                <div class="flex items-center bg-slate-800/60 dark:bg-slate-900/90 border border-slate-700/60 dark:border-slate-800 rounded-xl p-1 shadow-sm" role="region" aria-label="Cambiar tipo de vista">
+                    <button id="gridViewBtn" aria-label="Vista en Cuadrícula" aria-pressed="true" class="p-2 rounded-lg bg-emerald-600 text-white shadow-md transition-all">
                         <i data-lucide="layout-grid" class="w-4 h-4"></i>
                     </button>
-                    <button id="listViewBtn" aria-label="Vista en Lista" class="p-2 rounded-lg text-slate-400 hover:text-white transition-all">
+                    <button id="listViewBtn" aria-label="Vista en Lista" aria-pressed="false" class="p-2 rounded-lg text-slate-400 hover:text-white transition-all">
                         <i data-lucide="list" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -263,9 +414,9 @@
         </div>
 
         <!-- Categories horizontal bar -->
-        <div class="mt-4 flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar text-xs" id="categoriesContainer">
+        <nav aria-label="Filtro por Categorías" class="mt-4 flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar text-xs" id="categoriesContainer">
             <!-- Rendered dynamically -->
-        </div>
+        </nav>
     </section>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-2 pb-28 flex-1 w-full relative z-10">
@@ -277,7 +428,7 @@
         </div>
 
         <!-- Dynamic Items Container -->
-        <div id="itemsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div id="itemsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" role="region" aria-label="Lista de componentes de laboratorio">
             <!-- Material cards will be rendered here -->
         </div>
 
@@ -294,7 +445,8 @@
         </div>
     </main>
 
-    <div id="avatarWidget" class="fixed bottom-4 right-4 z-50 flex items-end gap-3 max-w-sm pointer-events-none sm:pointer-events-auto">
+    <!-- Mascot Avatar Widget "Doni" -->
+    <div id="avatarWidget" class="fixed bottom-4 right-4 z-40 flex items-end gap-3 max-w-sm pointer-events-none sm:pointer-events-auto">
         <!-- Speech Bubble -->
         <div id="speechBubble" class="speech-bubble rounded-2xl p-3 text-xs shadow-2xl transition-all duration-300 transform scale-100 origin-bottom-right pointer-events-auto max-w-[220px] sm:max-w-[260px]">
             <div class="flex items-start justify-between gap-1 mb-1">
@@ -302,18 +454,18 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
                     Doni Bot
                 </span>
-                <button id="minimizeAvatarBtn" class="text-slate-400 hover:text-white p-0.5" title="Cerrar">
+                <button id="minimizeAvatarBtn" aria-label="Minimizar mensaje de Doni" class="text-slate-400 hover:text-white p-0.5">
                     <i data-lucide="minus" class="w-3 h-3"></i>
                 </button>
             </div>
             <p id="avatarText" class="text-slate-200 dark:text-slate-100 font-medium leading-relaxed">
-                ¡Hola! Soy Doni. Haz clic en cualquier material para ver la sugerencia de donación.
+                ¡Hola! Soy Doni. Haz clic o selecciona cualquier material para ver la sugerencia de donación.
             </p>
         </div>
 
         <!-- SVG Mascot Robot Doni -->
-        <div id="avatarMascot" onclick="triggerMascotPoke()" onmouseenter="sound.playHover()" 
-            class="mascot-float cursor-pointer shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-600 p-0.5 shadow-xl shadow-emerald-500/30 transition-transform hover:scale-110 pointer-events-auto group">
+        <button id="avatarMascot" onclick="triggerMascotPoke()" onmouseenter="sound.playHover()" aria-label="Interactuar con el robot Doni"
+            class="mascot-float cursor-pointer shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-600 p-0.5 shadow-xl shadow-emerald-500/30 transition-transform hover:scale-110 pointer-events-auto group focus:outline-none">
             <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center relative overflow-hidden">
                 <svg class="w-10 h-10 text-emerald-300" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <!-- Antenna -->
@@ -336,7 +488,7 @@
                     <circle cx="43" cy="39" r="2" fill="#f43f5e" opacity="0.6"/>
                 </svg>
             </div>
-        </div>
+        </button>
     </div>
 
     <script>
@@ -438,6 +590,29 @@
 
         const sound = new SoundEngine();
 
+        const a11yState = {
+            voiceEnabled: false,
+            highContrast: false,
+            reduceMotion: false,
+            fontSize: 'normal'
+        };
+
+        function announce(text) {
+            // ARIA Live region announcement for Screen Readers
+            const announcer = document.getElementById('ariaAnnouncer');
+            if (announcer) announcer.textContent = text;
+
+            // Web Speech API Voice Reader
+            if (a11yState.voiceEnabled && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                const langMap = { es: 'es-ES', en: 'en-US', fr: 'fr-FR' };
+                utterance.lang = langMap[currentLang] || 'es-ES';
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
         const i18n = {
             es: {
                 appTitle: "Catálogo de Materiales",
@@ -457,6 +632,17 @@
                 sortDonationAsc: "Donación: Menor a Mayor",
                 sortDonationDesc: "Donación: Mayor a Menor",
                 donationLabel: "Sugerencia de donación:",
+                skipLink: "Saltar al contenido principal",
+                a11yBtnLabel: "Accesibilidad",
+                a11yModalTitle: "Opciones de Accesibilidad",
+                lblTextSize: "Tamaño de Texto",
+                lblHighContrast: "Alto Contraste",
+                descHighContrast: "Fondo negro puro con texto de alta visibilidad",
+                lblVoiceReader: "Lector de Voz (TTS)",
+                descVoiceReader: "Lee en voz alta componentes y mensajes al interactuar",
+                lblReduceMotion: "Reducir Movimiento",
+                descReduceMotion: "Desactiva animaciones y efectos flotantes",
+                a11yCloseDone: "Guardar y Cerrar",
                 categories: {
                     "Todos": "Todos",
                     "Microcontroladores": "Microcontroladores",
@@ -468,16 +654,16 @@
                     "Papelería y Oficina": "Papelería y Oficina"
                 },
                 avatar: {
-                    welcome: "¡Hola! Soy Doni. Haz clic en cualquier material para consultar su donación sugerida.",
-                    poke: "¡Bip boop! Recuerda que todas las donaciones apoyan el laboratorio.",
-                    themeDark: "¡Modo oscuro activado! Elegante y cómodo para la vista.",
-                    themeLight: "¡Modo claro activado! Luminoso y limpio.",
-                    soundOn: "¡Efectos de sonido activados!",
-                    soundOff: "Modo silencioso activado. Shhh...",
-                    langChange: "¡Idioma cambiado a Español!",
-                    search: "Buscando materiales con: \"{query}\"...",
+                    welcome: "¡Hola! Soy Doni. Haz clic o navega en cualquier material para consultar su donación sugerida.",
+                    poke: "¡Bip boop! Recuerda que todas las donaciones apoyan directamente al laboratorio.",
+                    themeDark: "Modo oscuro activado.",
+                    themeLight: "Modo claro activado.",
+                    soundOn: "Efectos de sonido activados.",
+                    soundOff: "Modo silencioso activado.",
+                    langChange: "Idioma cambiado a Español.",
+                    search: "Buscando materiales con: \"{query}\".",
                     catSelect: "Filtrando por categoría: {cat}.",
-                    itemClick: "Sugerencia de donación para {name}: ${amount} MXN.",
+                    itemClick: "Componente {name}. Sugerencia de donación: ${amount} pesos mexicanos.",
                     viewGrid: "Cambiado a vista en cuadrícula.",
                     viewList: "Cambiado a vista en lista."
                 }
@@ -500,6 +686,17 @@
                 sortDonationAsc: "Donation: Low to High",
                 sortDonationDesc: "Donation: High to Low",
                 donationLabel: "Suggested donation:",
+                skipLink: "Skip to main content",
+                a11yBtnLabel: "Accessibility",
+                a11yModalTitle: "Accessibility Options",
+                lblTextSize: "Text Size",
+                lblHighContrast: "High Contrast",
+                descHighContrast: "Pure black background with high visibility text",
+                lblVoiceReader: "Voice Reader (TTS)",
+                descVoiceReader: "Reads components and messages aloud on interaction",
+                lblReduceMotion: "Reduce Motion",
+                descReduceMotion: "Disables animations and floating effects",
+                a11yCloseDone: "Save and Close",
                 categories: {
                     "Todos": "All",
                     "Microcontroladores": "Microcontrollers",
@@ -511,16 +708,16 @@
                     "Papelería y Oficina": "Stationery & Office"
                 },
                 avatar: {
-                    welcome: "Hello! I am Doni. Click on any material to view its suggested donation.",
+                    welcome: "Hello! I am Doni. Click or focus on any material to view its suggested donation.",
                     poke: "Beep boop! All donations directly support the lab.",
-                    themeDark: "Dark mode enabled! Sleek and easy on the eyes.",
-                    themeLight: "Light mode enabled! Bright and crisp.",
-                    soundOn: "Sound effects enabled!",
-                    soundOff: "Mute mode enabled. Shhh...",
-                    langChange: "Language changed to English!",
-                    search: "Searching materials for: \"{query}\"...",
+                    themeDark: "Dark mode enabled.",
+                    themeLight: "Light mode enabled.",
+                    soundOn: "Sound effects enabled.",
+                    soundOff: "Mute mode enabled.",
+                    langChange: "Language changed to English.",
+                    search: "Searching materials for: \"{query}\".",
                     catSelect: "Filtering by category: {cat}.",
-                    itemClick: "Suggested donation for {name}: ${amount} MXN.",
+                    itemClick: "Component {name}. Suggested donation: ${amount} Mexican pesos.",
                     viewGrid: "Switched to grid layout.",
                     viewList: "Switched to list layout."
                 }
@@ -543,6 +740,17 @@
                 sortDonationAsc: "Don : Croissant",
                 sortDonationDesc: "Don : Décroissant",
                 donationLabel: "Don suggéré :",
+                skipLink: "Passer au contenido principal",
+                a11yBtnLabel: "Accessibilité",
+                a11yModalTitle: "Options d'Accessibilité",
+                lblTextSize: "Taille du Texte",
+                lblHighContrast: "Haut Contraste",
+                descHighContrast: "Fond noir pur avec texte haute visibilité",
+                lblVoiceReader: "Lecteur Vocal (TTS)",
+                descVoiceReader: "Lit les composants et messages à haute voix",
+                lblReduceMotion: "Réduire les Mouvements",
+                descReduceMotion: "Désactive les animations et effets flottants",
+                a11yCloseDone: "Enregistrer et Fermer",
                 categories: {
                     "Todos": "Tous",
                     "Microcontroladores": "Microcontrôleurs",
@@ -556,14 +764,14 @@
                 avatar: {
                     welcome: "Bonjour ! Je suis Doni. Cliquez sur un élément pour voir le don suggéré.",
                     poke: "Bip boop ! Tous les dons soutiennent directement le laboratoire.",
-                    themeDark: "Mode sombre activé ! Élégant pour les yeux.",
-                    themeLight: "Mode clair activé ! Lumineux et frais.",
-                    soundOn: "Effets sonores activés !",
-                    soundOff: "Mode silencieux activé. Chut...",
-                    langChange: "Langue changée en Français !",
-                    search: "Recherche de : \"{query}\"...",
+                    themeDark: "Mode sombre activé.",
+                    themeLight: "Mode clair activé.",
+                    soundOn: "Effets sonores activés.",
+                    soundOff: "Mode silencieux activé.",
+                    langChange: "Langue changée en Français.",
+                    search: "Recherche de : \"{query}\".",
                     catSelect: "Filtrage par catégorie : {cat}.",
-                    itemClick: "Don suggéré pour {name} : ${amount} MXN.",
+                    itemClick: "Composant {name}. Don suggéré : ${amount} pesos mexicains.",
                     viewGrid: "Passé en vue grille.",
                     viewList: "Passé en vue liste."
                 }
@@ -712,10 +920,20 @@
         const resetFiltersBtn = document.getElementById('resetFiltersBtn');
         const emptyResetBtn = document.getElementById('emptyResetBtn');
 
+        // Accessibility DOM Elements
+        const a11yMenuToggleBtn = document.getElementById('a11yMenuToggleBtn');
+        const a11yModal = document.getElementById('a11yModal');
+        const closeA11yModalBtn = document.getElementById('closeA11yModalBtn');
+        const a11yCloseDoneBtn = document.getElementById('a11yCloseDoneBtn');
+        const toggleHighContrastBtn = document.getElementById('toggleHighContrastBtn');
+        const toggleVoiceBtn = document.getElementById('toggleVoiceBtn');
+        const toggleReduceMotionBtn = document.getElementById('toggleReduceMotionBtn');
+        const hcStatus = document.getElementById('hcStatus');
+        const voiceStatus = document.getElementById('voiceStatus');
+        const motionStatus = document.getElementById('motionStatus');
+
         // Mascot Avatar Elements
         const avatarText = document.getElementById('avatarText');
-        const avatarMascot = document.getElementById('avatarMascot');
-        const minimizeAvatarBtn = document.getElementById('minimizeAvatarBtn');
         const speechBubble = document.getElementById('speechBubble');
 
         function speakAvatar(textKey, variables = {}) {
@@ -729,6 +947,8 @@
             avatarText.textContent = template;
             speechBubble.classList.remove('scale-0', 'opacity-0');
             speechBubble.classList.add('scale-100', 'opacity-100');
+
+            announce(template);
         }
 
         function triggerMascotPoke() {
@@ -736,10 +956,86 @@
             speakAvatar('poke');
         }
 
-        minimizeAvatarBtn.addEventListener('click', (e) => {
+        document.getElementById('minimizeAvatarBtn').addEventListener('click', (e) => {
             e.stopPropagation();
             speechBubble.classList.toggle('scale-0');
             speechBubble.classList.toggle('opacity-0');
+        });
+
+        /* Accessibility Menu Handlers */
+        a11yMenuToggleBtn.addEventListener('click', () => {
+            sound.playClick();
+            a11yModal.classList.remove('hidden');
+            a11yMenuToggleBtn.setAttribute('aria-expanded', 'true');
+            closeA11yModalBtn.focus();
+        });
+
+        function closeA11yModal() {
+            sound.playClick();
+            a11yModal.classList.add('hidden');
+            a11yMenuToggleBtn.setAttribute('aria-expanded', 'false');
+            a11yMenuToggleBtn.focus();
+        }
+
+        closeA11yModalBtn.addEventListener('click', closeA11yModal);
+        a11yCloseDoneBtn.addEventListener('click', closeA11yModal);
+
+        function setFontSize(size) {
+            sound.playClick();
+            a11yState.fontSize = size;
+            document.documentElement.setAttribute('data-font-size', size);
+            
+            const btnNormal = document.getElementById('btnFontNormal');
+            const btnLarge = document.getElementById('btnFontLarge');
+            const btnXL = document.getElementById('btnFontXL');
+
+            [btnNormal, btnLarge, btnXL].forEach(btn => {
+                btn.className = "px-3 py-2 rounded-xl border border-slate-700 font-bold bg-slate-800 hover:bg-slate-700 text-slate-200";
+            });
+
+            if (size === 'normal') btnNormal.className = "px-3 py-2 rounded-xl border border-slate-700 font-bold bg-emerald-600 text-white";
+            if (size === 'large') btnLarge.className = "px-3 py-2 rounded-xl border border-slate-700 font-bold bg-emerald-600 text-white";
+            if (size === 'xlarge') btnXL.className = "px-3 py-2 rounded-xl border border-slate-700 font-bold bg-emerald-600 text-white";
+
+            announce("Tamaño de texto: " + size);
+        }
+
+        toggleHighContrastBtn.addEventListener('click', () => {
+            sound.playClick();
+            a11yState.highContrast = !a11yState.highContrast;
+            document.documentElement.classList.toggle('high-contrast', a11yState.highContrast);
+            toggleHighContrastBtn.setAttribute('aria-pressed', a11yState.highContrast ? 'true' : 'false');
+            hcStatus.textContent = a11yState.highContrast ? 'ON' : 'OFF';
+            toggleHighContrastBtn.className = a11yState.highContrast 
+                ? "px-3 py-1.5 rounded-xl bg-amber-400 text-black font-extrabold text-xs shadow-md"
+                : "px-3 py-1.5 rounded-xl bg-slate-700 font-bold text-xs text-slate-200 hover:bg-slate-600 transition-all";
+            announce("Alto contraste " + (a11yState.highContrast ? "activado" : "desactivado"));
+        });
+
+        toggleVoiceBtn.addEventListener('click', () => {
+            sound.playClick();
+            a11yState.voiceEnabled = !a11yState.voiceEnabled;
+            toggleVoiceBtn.setAttribute('aria-pressed', a11yState.voiceEnabled ? 'true' : 'false');
+            voiceStatus.textContent = a11yState.voiceEnabled ? 'ON' : 'OFF';
+            toggleVoiceBtn.className = a11yState.voiceEnabled 
+                ? "px-3 py-1.5 rounded-xl bg-emerald-500 text-black font-extrabold text-xs shadow-md"
+                : "px-3 py-1.5 rounded-xl bg-slate-700 font-bold text-xs text-slate-200 hover:bg-slate-600 transition-all";
+            
+            if (a11yState.voiceEnabled) {
+                announce("Lector de voz activado.");
+            }
+        });
+
+        toggleReduceMotionBtn.addEventListener('click', () => {
+            sound.playClick();
+            a11yState.reduceMotion = !a11yState.reduceMotion;
+            document.documentElement.classList.toggle('reduce-motion', a11yState.reduceMotion);
+            toggleReduceMotionBtn.setAttribute('aria-pressed', a11yState.reduceMotion ? 'true' : 'false');
+            motionStatus.textContent = a11yState.reduceMotion ? 'ON' : 'OFF';
+            toggleReduceMotionBtn.className = a11yState.reduceMotion 
+                ? "px-3 py-1.5 rounded-xl bg-indigo-500 text-white font-extrabold text-xs shadow-md"
+                : "px-3 py-1.5 rounded-xl bg-slate-700 font-bold text-xs text-slate-200 hover:bg-slate-600 transition-all";
+            announce("Reducción de movimiento " + (a11yState.reduceMotion ? "activada" : "desactivada"));
         });
 
         function updateLocalization() {
@@ -754,6 +1050,17 @@
             document.getElementById('emptyTitle').textContent = langDict.emptyTitle;
             document.getElementById('emptyDesc').textContent = langDict.emptyDesc;
             document.getElementById('emptyResetBtn').textContent = langDict.emptyReset;
+            document.getElementById('skipLinkBtn').textContent = langDict.skipLink;
+            document.getElementById('a11yBtnLabel').textContent = langDict.a11yBtnLabel;
+            document.getElementById('a11yModalTitle').textContent = langDict.a11yModalTitle;
+            document.getElementById('lblTextSize').childNodes[2].nodeValue = " " + langDict.lblTextSize;
+            document.getElementById('lblHighContrast').textContent = langDict.lblHighContrast;
+            document.getElementById('descHighContrast').textContent = langDict.descHighContrast;
+            document.getElementById('lblVoiceReader').textContent = langDict.lblVoiceReader;
+            document.getElementById('descVoiceReader').textContent = langDict.descVoiceReader;
+            document.getElementById('lblReduceMotion').textContent = langDict.lblReduceMotion;
+            document.getElementById('descReduceMotion').textContent = langDict.descReduceMotion;
+            document.getElementById('a11yCloseDoneBtn').textContent = langDict.a11yCloseDone;
 
             // Input placeholders & sound status
             searchInput.placeholder = langDict.searchPlaceholder;
@@ -788,6 +1095,7 @@
                 return `
                     <button onclick="setCategory('${catKey}')" 
                         onmouseenter="sound.playHover()"
+                        aria-pressed="${isSelected ? 'true' : 'false'}"
                         class="px-3 py-2 rounded-xl font-medium text-xs whitespace-nowrap transition-all flex items-center gap-2 ${activeClass}">
                         <span>${localizedName}</span>
                         <span class="text-[10px] px-1.5 py-0.2 rounded-md ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-700/60 dark:bg-slate-800 text-slate-400'}">${count}</span>
@@ -839,6 +1147,7 @@
             if (filtered.length === 0) {
                 itemsContainer.innerHTML = '';
                 emptyState.classList.remove('hidden');
+                announce(langDict.emptyTitle);
                 return;
             } else {
                 emptyState.classList.add('hidden');
@@ -858,16 +1167,18 @@
                     const delay = Math.min(index * 25, 350);
 
                     return `
-                        <div onclick="handleItemClick('${item.name.replace(/'/g, "\\'")}', ${item.donation})"
+                        <div tabindex="0" role="button" aria-label="${item.name}, Categoría ${localizedCategoryName}, Sugerencia de donación ${item.donation} pesos"
+                            onclick="handleItemClick('${item.name.replace(/'/g, "\\'")}', ${item.donation})"
+                            onfocus="if(a11yState.voiceEnabled) announce('${item.name}, Donación sugerida ${item.donation} pesos')"
                             onmouseenter="sound.playHover()" 
                             style="animation-delay: ${delay}ms;"
-                            class="glass-card rounded-2xl p-4 flex flex-col justify-between group stagger-item border cursor-pointer ${theme.hoverBorder}">
+                            class="glass-card rounded-2xl p-4 flex flex-col justify-between group stagger-item border cursor-pointer focus:outline-none ${theme.hoverBorder}">
                             <div>
                                 <div class="flex items-center justify-between mb-3.5">
                                     <div class="w-10 h-10 rounded-xl ${theme.iconBg} flex items-center justify-center card-icon shadow-inner">
                                         <i data-lucide="${item.icon}" class="w-5 h-5"></i>
                                     </div>
-                                    <span class="text-[10px] font-semibold px-2.5 py-1 rounded-lg border ${theme.badge}">
+                                    <span class="text-[10px] font-semibold px-2.5 py-1 rounded-lg border ${theme.badge} badge-hc">
                                         ${localizedCategoryName}
                                     </span>
                                 </div>
@@ -879,7 +1190,7 @@
 
                             <div class="mt-5 pt-3 border-t border-slate-700/40 dark:border-slate-800/80 flex items-center justify-between">
                                 <span class="text-[11px] text-slate-400 font-medium">${langDict.donationLabel}</span>
-                                <span class="px-2.5 py-0.5 rounded-lg bg-gradient-to-r ${theme.donationBg} text-white font-extrabold text-xs shadow-sm">
+                                <span class="px-2.5 py-0.5 rounded-lg bg-gradient-to-r ${theme.donationBg} text-white font-extrabold text-xs shadow-sm badge-hc">
                                     $${item.donation} <span class="text-[9px] font-normal opacity-80">MXN</span>
                                 </span>
                             </div>
@@ -898,10 +1209,12 @@
                     const delay = Math.min(index * 20, 300);
 
                     return `
-                        <div onclick="handleItemClick('${item.name.replace(/'/g, "\\'")}', ${item.donation})"
+                        <div tabindex="0" role="button" aria-label="${item.name}, Categoría ${localizedCategoryName}, Sugerencia de donación ${item.donation} pesos"
+                            onclick="handleItemClick('${item.name.replace(/'/g, "\\'")}', ${item.donation})"
+                            onfocus="if(a11yState.voiceEnabled) announce('${item.name}, Donación sugerida ${item.donation} pesos')"
                             onmouseenter="sound.playHover()"
                             style="animation-delay: ${delay}ms;"
-                            class="glass-card px-4 py-3 rounded-xl flex items-center justify-between gap-4 group stagger-item border hover:border-slate-700 cursor-pointer">
+                            class="glass-card px-4 py-3 rounded-xl flex items-center justify-between gap-4 group stagger-item border hover:border-slate-700 cursor-pointer focus:outline-none">
                             <div class="flex items-center gap-3.5 min-w-0">
                                 <div class="w-9 h-9 rounded-xl ${theme.iconBg} flex items-center justify-center card-icon shrink-0">
                                     <i data-lucide="${item.icon}" class="w-4 h-4"></i>
@@ -913,7 +1226,7 @@
                             </div>
 
                             <div class="flex items-center gap-3 shrink-0">
-                                <span class="px-2.5 py-1 rounded-lg bg-gradient-to-r ${theme.donationBg} text-white font-extrabold text-xs shadow-sm">
+                                <span class="px-2.5 py-1 rounded-lg bg-gradient-to-r ${theme.donationBg} text-white font-extrabold text-xs shadow-sm badge-hc">
                                     $${item.donation} <span class="text-[9px] font-normal opacity-80">MXN</span>
                                 </span>
                             </div>
@@ -980,6 +1293,8 @@
         gridViewBtn.addEventListener('click', () => {
             sound.playClick();
             currentView = 'grid';
+            gridViewBtn.setAttribute('aria-pressed', 'true');
+            listViewBtn.setAttribute('aria-pressed', 'false');
             gridViewBtn.className = "p-2 rounded-lg bg-emerald-600 text-white shadow-md transition-all";
             listViewBtn.className = "p-2 rounded-lg text-slate-400 hover:text-white transition-all";
             speakAvatar('viewGrid');
@@ -989,6 +1304,8 @@
         listViewBtn.addEventListener('click', () => {
             sound.playClick();
             currentView = 'list';
+            listViewBtn.setAttribute('aria-pressed', 'true');
+            gridViewBtn.setAttribute('aria-pressed', 'false');
             listViewBtn.className = "p-2 rounded-lg bg-emerald-600 text-white shadow-md transition-all";
             gridViewBtn.className = "p-2 rounded-lg text-slate-400 hover:text-white transition-all";
             speakAvatar('viewList');
@@ -1032,7 +1349,6 @@
             }
         });
 
-        // Initialize App on Page Load
         window.onload = function() {
             updateLocalization();
             speakAvatar('welcome');
