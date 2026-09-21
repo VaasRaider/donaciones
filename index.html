@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo de Materiales - Sugerencias de Donación</title>
 
+    <!-- Tailwind CSS (CDN de desarrollo) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -507,7 +508,7 @@
                     if (AudioContextClass) this.ctx = new AudioContextClass();
                 }
                 if (this.ctx && this.ctx.state === 'suspended') {
-                    this.ctx.resume();
+                    this.ctx.resume().catch(() => {});
                 }
             }
 
@@ -602,14 +603,18 @@
             const announcer = document.getElementById('ariaAnnouncer');
             if (announcer) announcer.textContent = text;
 
-            // Web Speech API Voice Reader
+            // Web Speech API Voice Reader (Con protección try-catch)
             if (a11yState.voiceEnabled && 'speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                const langMap = { es: 'es-ES', en: 'en-US', fr: 'fr-FR' };
-                utterance.lang = langMap[currentLang] || 'es-ES';
-                utterance.rate = 1.0;
-                window.speechSynthesis.speak(utterance);
+                try {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    const langMap = { es: 'es-ES', en: 'en-US', fr: 'fr-FR' };
+                    utterance.lang = langMap[currentLang] || 'es-ES';
+                    utterance.rate = 1.0;
+                    window.speechSynthesis.speak(utterance);
+                } catch(e) {
+                    console.warn("SpeechSynthesis no disponible:", e);
+                }
             }
         }
 
@@ -944,9 +949,11 @@
                 template = template.replace(`{${k}}`, variables[k]);
             });
 
-            avatarText.textContent = template;
-            speechBubble.classList.remove('scale-0', 'opacity-0');
-            speechBubble.classList.add('scale-100', 'opacity-100');
+            if (avatarText) avatarText.textContent = template;
+            if (speechBubble) {
+                speechBubble.classList.remove('scale-0', 'opacity-0');
+                speechBubble.classList.add('scale-100', 'opacity-100');
+            }
 
             announce(template);
         }
@@ -1235,7 +1242,10 @@
                 }).join('');
             }
 
-            lucide.createIcons();
+            // Ejecución segura de Lucide Icons
+            if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
+                lucide.createIcons();
+            }
         }
 
         let searchDebounceTimer;
@@ -1349,10 +1359,17 @@
             }
         });
 
-        window.onload = function() {
+        // Carga inmediata utilizando DOMContentLoaded en lugar de esperar a window.onload
+        function initApp() {
             updateLocalization();
             speakAvatar('welcome');
-        };
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
     </script>
 </body>
 </html>
