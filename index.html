@@ -2,11 +2,14 @@
 <html lang="es" class="dark" data-font-size="normal">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="theme-color" content="#090d16">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Catálogo de Materiales - Sugerencias de Donación</title>
 
     <!-- Tailwind CSS (CDN de desarrollo) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com" async onerror="window.__tailwindFailed=true"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -30,7 +33,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest" async onerror="window.__lucideFailed=true"></script>
 
     <style>
         :root {
@@ -225,6 +228,37 @@
         .hide-scrollbar {
             -ms-overflow-style: none;
             scrollbar-width: none;
+        }
+        /* Mobile/Android hardening */
+        html, body {
+            min-width: 0;
+            width: 100%;
+            max-width: 100%;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+        body {
+            min-height: 100dvh;
+            min-height: 100vh;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        button, input, select {
+            font: inherit;
+            -webkit-tap-highlight-color: transparent;
+        }
+        @supports (height: 100dvh) {
+            body { min-height: 100dvh; }
+        }
+        .app-load-error {
+            position: fixed;
+            inset: auto 12px 12px 12px;
+            z-index: 9999;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: #7f1d1d;
+            color: #fff;
+            font: 600 13px/1.4 system-ui, sans-serif;
+            box-shadow: 0 10px 30px rgba(0,0,0,.35);
         }
     </style>
 </head>
@@ -1050,7 +1084,12 @@
 
             // Text elements update
             document.getElementById('appTitle').textContent = langDict.appTitle;
-            document.getElementById('appSubtitle').childNodes[2].nodeValue = " " + langDict.appSubtitle;
+            const subtitle = document.getElementById('appSubtitle');
+            if (subtitle) {
+                const textNode = Array.from(subtitle.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.nodeValue.trim());
+                if (textNode) textNode.nodeValue = " " + langDict.appSubtitle;
+                else subtitle.appendChild(document.createTextNode(" " + langDict.appSubtitle));
+            }
             document.getElementById('sectionHeader').textContent = langDict.sectionHeader;
             document.getElementById('sectionDesc').textContent = langDict.sectionDesc;
             document.getElementById('resetFiltersText').textContent = langDict.resetFilters;
@@ -1060,7 +1099,12 @@
             document.getElementById('skipLinkBtn').textContent = langDict.skipLink;
             document.getElementById('a11yBtnLabel').textContent = langDict.a11yBtnLabel;
             document.getElementById('a11yModalTitle').textContent = langDict.a11yModalTitle;
-            document.getElementById('lblTextSize').childNodes[2].nodeValue = " " + langDict.lblTextSize;
+            const textSizeLabel = document.getElementById('lblTextSize');
+            if (textSizeLabel) {
+                const textNode = Array.from(textSizeLabel.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.nodeValue.trim());
+                if (textNode) textNode.nodeValue = " " + langDict.lblTextSize;
+                else textSizeLabel.appendChild(document.createTextNode(" " + langDict.lblTextSize));
+            }
             document.getElementById('lblHighContrast').textContent = langDict.lblHighContrast;
             document.getElementById('descHighContrast').textContent = langDict.descHighContrast;
             document.getElementById('lblVoiceReader').textContent = langDict.lblVoiceReader;
@@ -1242,9 +1286,13 @@
                 }).join('');
             }
 
-            // Ejecución segura de Lucide Icons
-            if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
-                lucide.createIcons();
+            // Los iconos son opcionales: si la CDN falla, la aplicación sigue funcionando.
+            try {
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons();
+                }
+            } catch (iconError) {
+                console.warn('Lucide no disponible:', iconError);
             }
         }
 
@@ -1359,17 +1407,58 @@
             }
         });
 
-        // Carga inmediata utilizando DOMContentLoaded en lugar de esperar a window.onload
+        // Arranque robusto para Android/Chrome y GitHub Pages.
+        // La aplicación NO espera a Tailwind ni a Lucide: ambas CDN son opcionales.
+        let appStarted = false;
+
+        function showBootError(error) {
+            console.error('Error al iniciar la aplicación:', error);
+            const box = document.createElement('div');
+            box.className = 'app-load-error';
+            box.textContent = 'La aplicación tuvo un problema al iniciar. Recarga la página.';
+            document.body.appendChild(box);
+        }
+
         function initApp() {
-            updateLocalization();
-            speakAvatar('welcome');
+            if (appStarted) return;
+            appStarted = true;
+            try {
+                updateLocalization();
+                speakAvatar('welcome');
+                // Si Lucide carga después, mejora los iconos sin bloquear la aplicación.
+                setTimeout(() => {
+                    try {
+                        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                            window.lucide.createIcons();
+                        }
+                    } catch (e) {
+                        console.warn('Iconos opcionales no disponibles:', e);
+                    }
+                }, 0);
+            } catch (error) {
+                showBootError(error);
+            }
+        }
+
+        function boot() {
+            // Permite al navegador pintar primero; evita depender de window.onload.
+            requestAnimationFrame(() => setTimeout(initApp, 0));
         }
 
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initApp);
+            document.addEventListener('DOMContentLoaded', boot, { once: true });
         } else {
-            initApp();
+            boot();
         }
+    </script>
+    <script>
+        // Diagnóstico no intrusivo de recursos externos. GitHub Pages no necesita
+        // ninguna función de pago para servir este HTML.
+        window.addEventListener('error', function (event) {
+            if (event.target && event.target.tagName === 'SCRIPT') {
+                console.warn('Recurso externo no disponible:', event.target.src || '(script inline)');
+            }
+        }, true);
     </script>
 </body>
 </html>
